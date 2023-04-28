@@ -1,0 +1,110 @@
+#!/bin/bash
+#----------------------------------------------------------
+#       nBackup Check Script
+#----------------------------------------------------------
+#
+#		To be called either from the terminal or from
+#		within polybar.
+#		
+#		Checks the validity of the existing backup data
+#		located in ${backupRootDir}. The following
+#		propertes are tested:
+#		
+#			- Does ${backupRootDir}logs exist?
+#			- Does ${backupRootDir}logs contain any
+#			  directories?
+#			- Were there any "*.err.log" files created in
+#			  the previous week of backups
+#		
+#		The output on this is reported to stdout with a
+#		green and happy yes, a red and angry warning or an
+#		amber notification when in progress.
+#		
+#		Error reports are directed to ${errorLog}
+#
+#       Version 1.1
+#       JM      1st August 2021
+#
+#----------------------------------------------------------
+#       Future features:
+#
+#
+#----------------------------------------------------------
+#       Changelog:
+#
+#			- Added active back up indicator
+#
+#----------------------------------------------------------
+
+# Define initial script parameters and clear the error log
+backupRootDir="/synology/cloudBackupDellDebian/"
+errorLog="/tmp/checkBackup.err.log"
+currentTime="$(date '+%Y%m%d%H%M%S')"
+oneWeekAgoTime="$(date '+%Y%m%d%H%M%S' --date="1 week ago")"
+activeBackupStatus=$(pgrep nBackup)
+backupStatus="0"
+>| ${errorLog}
+
+# Test whether the root backup directory and required subdirectory exist
+if [ ! -d "${backupRootDir}logs" ]
+then
+	echo "Error: ${backupRootDir}logs does not exist" >> ${errorLog}
+	backupStatus="1"
+elif [ ! -z "${activeBackupStatus}" ]
+then
+	backupStatus="-1"
+fi
+
+# Only exectute this block if the above test passed
+if [[ "$backupStatus" == "0" ]]
+then
+
+	# Identify how many unique backups exist and the number total backup calls made
+	# Raise warning flag if no backup calls have been made
+	uniqueBackupCount=$(find "${backupRootDir}" -maxdepth 1 -type d -name "????????_??????" | wc -l)
+	totalBackupCount=$(find "${backupRootDir}logs/" -maxdepth 1 -type d -name "????????_??????" | wc -l)
+	if [[ "${totalBackupCount}" -eq "0" ]]
+	then
+		echo "Error: There are no backups in the last week" >> ${errorLog}
+		backupStatus="1"
+	fi
+
+	# Read each backup instance in the logs directory
+	# The date-time stamp had to be split for the if conditionality...
+	while read backupDir
+	do
+		backupDirDatestamp=$(echo "$backupDir" | sed 's/.*\/\([0-9]*\)_[0-9]*.*/\1/')
+		backupDirTimestamp=$(echo "$backupDir" | sed 's/.*\/[0-9]*_\([0-9]*\).*/\1/')
+		backupDirDateTimestamp="${backupDirDatestamp}${backupDirTimestamp}"
+	
+		# Identify whether any backups in the previous week raised any errors
+		if [[ "$backupDirDateTimestamp" -gt "$oneWeekAgoTime" && "$backupDirDateTimestamp" -le "$currentTime" ]]
+		then
+			if [ -f "$(find "$backupDir" -name "*err.log")" ]
+			then
+				echo "Error: There is an error in ${backupDir}" >> ${errorLog}
+				backupStatus="1"
+			fi
+		fi
+	done < <(find "${backupRootDir}logs/" -maxdepth 1 -type d -name "????????_??????")
+fi
+
+# Final status check to pass to polybar
+if [[ "$backupStatus" == "-1" ]]
+then
+    echo "%{F#E99929}%{u#E99929}%{u-}%{F-}"	# Backing Up
+	echo "Backing up" 1>&2
+elif [[ "$backupStatus" == "0" ]]
+then
+#    echo "%{u#55aa55}%{F#55aa55}%{F-} T:${totalBackupCount} U:${uniqueBackupCount}%{u-}" # For debugging unique backup count
+    echo "%{u#55aa55}%{F#55aa55}%{F-}"
+	echo "No errors" 1>&2
+else
+    echo "%{F#FF0000}%{u#FF0000}%{u-}%{F-}"	# Backup Error
+	echo "Errors identified" 1>&2
+	exit 1
+fi
+
+# Cleanup
+rm ${errorLog} 2&> /dev/null
+exit 0

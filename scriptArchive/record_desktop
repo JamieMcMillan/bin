@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# https://www.youtube.com/watch?v=1kPeAIBLrDo
+
+INRES="1920x1080"
+OUTRES="1920x1080"
+FPS="30"
+
+# Identify available channels
+ffmpeg -f avfoundation -list_devices true -i ""
+
+# Record
+ffmpeg -f avfoundation -s "$INRES" -r "$FPS" -i 1:0 \
+ -vcodec libx264 -s "$OUTRES" \
+-acodec libmp3lame -ab 128k -ar 44100 \
+-threads 0 -f flv $1
+
+# https://trac.ffmpeg.org/wiki/Capture/Desktop Lossless recording?
+#ffmpeg -f avfoundation -s "$INRES" -r "$FPS" -i 1:0 \
+# -c:v libx264rgb -crf 0 -preset ultrafast -color_range 2 -s "$OUTRES" \
+#-acodec libmp3lame -ab 128k -ar 44100 \
+#-threads 0 -f flv $1

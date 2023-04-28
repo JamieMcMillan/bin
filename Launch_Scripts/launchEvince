@@ -1,0 +1,4 @@
+#!/bin/bash
+nohup evince &
+exit
+#open /opt/homebrew/bin/evince && exit

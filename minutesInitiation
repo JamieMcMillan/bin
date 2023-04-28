@@ -1,0 +1,48 @@
+#!/bin/bash
+#----------------------------------------------------------
+#	Initiate Minutes
+#----------------------------------------------------------
+#	
+#	In the specified directory, create a markdown file
+#	from the template
+#	
+#	Version 1.0
+#	JM	28/04/2023
+#	
+#----------------------------------------------------------
+#	Future features:
+#
+#		
+#----------------------------------------------------------
+#	Changelog:
+#
+#
+#----------------------------------------------------------
+
+
+#------------------
+# Initialisation Parameters
+#------------------
+templateLocation="${HOME}/Documents/Personal_Notes/Satellite Vu/personalNotesJamieMcMillan/Meetings/.meetingNoteTemplate.md"
+vaultLocation="${HOME}/Documents/Personal_Notes/Satellite Vu/personalNotesJamieMcMillan/Meetings/"
+dateTodayCalendar=$(date '+%d/%m/%Y')
+dateTodayFilename=$(date '+%Y%m%d')
+
+#------------------
+# main
+#------------------
+
+# Make directory for new minutes
+mkdir -p "${vaultLocation}/${dateTodayFilename}"
+
+# Test whether the targeted markdown file exists
+if [ -f "${vaultLocation}/${dateTodayFilename}/${dateTodayFilename}.md" ]
+then
+  printf "minuteInitiation [error]: File exists and cannot be overwritten\n" 1>&2
+  exit 1
+fi
+
+# Copy template to target directory
+sed "s@datePlaceholder@${dateTodayCalendar}@" "${templateLocation}" > "${vaultLocation}/${dateTodayFilename}/${dateTodayFilename}.md"
+
+exit 0

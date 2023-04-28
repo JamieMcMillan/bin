@@ -1,0 +1,242 @@
+#!/bin/bash
+#------------------------------------------
+#      Average and Standard Deviation
+#------------------------------------------
+#
+#	It then samples the values
+#	and averages these together.
+#	The other values are the St Dev
+#	and number of samples respectively.
+#
+#	This accepts a single
+#	column of data, from a file or
+#	stdin.
+#
+#	Requires a fix of the clean_array
+#	function before the -c option can
+#	be used reliably.
+#
+#------------------------------------------
+
+# Return a cleaned column
+clean_array() {
+	# Determine a suitable temporary file ID
+	TEST="false"
+	while [ "$TEST" == "false" ] 
+	do
+		RAND=$RANDOM
+		if [ ! -f "/tmp/stats_file_$RAND" ]
+		then
+			TEST="true"
+		fi
+	done
+
+	# Delete non-float lines
+	awk '$0==($0+0)' $@ >| /tmp/stats_file_$RAND
+
+	# Handles error due to inputs of length 0 or 1
+        # However would then return an incorrect count	
+	POINTS=$(cat /tmp/stats_file_$RAND | wc -l)
+	if [[ $POINTS -le "0" ]]
+	then
+		printf "0\n0\n"
+	elif [[ $POINTS == "1" ]]
+	then
+		cat /tmp/stats_file_$RAND
+		cat /tmp/stats_file_$RAND
+	else
+		cat /tmp/stats_file_$RAND
+	fi
+	rm /tmp/stats_file_$RAND
+	return 0
+}
+
+# Return verbose output from stats
+stats_verbose() {
+
+clean_array $@ | \
+awk '
+{
+	# Sum the entire array in total
+	total += $1
+	array[NR] = $1 
+}
+
+END {
+
+	# Loop through each entry to calculate
+	# the standard deviation
+	for ( count = 1; count <= NR; count++ ) {
+		totalsq += ( ( array[count] - ( total/NR ) ) ^2 ); }
+		printf("Average %10.8f\tSt Dev %10.8f\tN %i\n", total/(count-1), sqrt(totalsq/(count-2)), count-1 )
+}'
+
+}
+
+# Return average output from stats
+stats_average() {
+
+clean_array $@ | \
+awk '
+{
+	# Sum the entire array in total
+	total += $1
+	array[NR] = $1 } END {
+
+	# Loop through each entry to calculate
+	# the standard deviation
+	for ( count = 1; count <= NR; count++ ) {
+		totalsq += ( ( array[count] - ( total/NR ) ) ^2 ); }
+		printf("%10.8f\n", total/(count-1) )
+}'
+
+}
+
+# Return standard deviation output from stats
+stats_stdev() {
+
+clean_array $@ | \
+awk '
+{
+	# Sum the entire array in total
+	total += $1
+	array[NR] = $1 } END {
+
+	# Loop through each entry to calculate
+	# the standard deviation
+	for ( count = 1; count <= NR; count++ ) {
+		totalsq += ( ( array[count] - ( total/NR ) ) ^2 ); }
+		printf("%10.8f\n", sqrt(totalsq/(count-2)) )
+}'
+
+
+}
+
+# Return range output from stats
+stats_range() {
+
+clean_array $@ | \
+sort -n | \
+awk '
+	NR==1	{lower=$1}
+	END		{upper=$1}
+	END 	{
+	print upper-lower
+	}'
+}
+
+# Return count output from stats
+stats_count() {
+
+clean_array $@ | \
+awk '
+{
+	# Sum the entire array in total
+	total += $1
+	array[NR] = $1 } END {
+
+	# Loop through each entry to calculate
+	# the standard deviation
+	for ( count = 1; count <= NR; count++ ) {
+		totalsq += ( ( array[count] - ( total/NR ) ) ^2 ); }
+		printf("%i\n", count-1 )
+}'
+
+}
+
+
+#Set Script Name variable
+SCRIPT=$(basename "${BASH_SOURCE[0]}")
+
+#Set fonts for Help.
+NORM=$(tput sgr0)
+BOLD=$(tput bold)
+REV=$(tput smso)
+
+
+#Help function
+function HELP {
+	echo -e \\n"Help documentation for ${BOLD}${SCRIPT}.${NORM}"\\n
+	echo -e "${REV}Basic usage:${NORM} ${BOLD}$SCRIPT file_in${NORM}"\\n
+	echo -e "Returns the ${BOLD}stats${NORM} for an input column of numbers."
+	echo -e "Defaults to a verbose output of the average, standard deviation and count."\\n
+	echo -e "Return one of these three values by specifying the following options:"\\n
+	echo "${REV}-a${NORM}  --Returns the average of the input stream."
+	echo "${REV}-s${NORM}  --Returns the standard deviation of the input stream."
+	echo "${REV}-r${NORM}  --Returns the range of the input stream."
+	echo "${REV}-c${NORM}  --Returns the count of the input stream."
+	echo "${REV}-v${NORM}  --Returns the verbose output of the input stream."
+	echo -e "${REV}-h${NORM}  --Displays this help message. No further functions are performed."\\n
+	echo -e "Example: ${BOLD}$SCRIPT -a file_in ${NORM}"\\n
+	exit 1
+}
+
+
+# Start getopts code
+
+# Set default values to options
+OPT="verbose"
+
+#Parse command line flags
+#If an option should be followed by an argument, it should be followed by a ":".
+#Notice there is no ":" after "h". The leading ":" suppresses error messages from
+#getopts. This is required to get my unrecognized option code to work.
+
+while getopts :vasrch FLAG; do
+	case $FLAG in
+		v)  #set option "v"
+			OPT="verbose"
+			;;
+		a) #set option "a"
+			OPT="average"
+			;;
+		s) #set option "s"
+			OPT="stdev"
+			;;
+		r) #set option "r"
+			OPT="range"
+			;;
+		c) #set option "c"
+			OPT="count"
+			;;
+		h)  #show help
+			HELP
+			;;
+		\?) #unrecognized option - show help
+			echo -e \\n"Option -${BOLD}$OPTARG${NORM} not allowed."
+			HELP
+			;;
+	esac
+done
+
+#This tells getopts to move on to the next argument.
+shift $((OPTIND-1))
+
+# End getopts code
+
+
+# Redirect the first argument or stdin to $input
+[ $# -ge 1 -a -f "$1" ] && input="$@" || input="-"
+
+
+# Execute corresponding stats based on option
+if [[ $OPT == "verbose" ]]
+then
+	stats_verbose $input
+elif [[ "$OPT" == "average" ]]
+then
+	stats_average $input
+elif [[ "$OPT" == "stdev" ]]
+then
+	stats_stdev $input
+elif [[ "$OPT" == "range" ]]
+then
+	stats_range $input
+elif [[ "$OPT" == "count" ]]
+then
+	stats_count $input
+else
+	printf "Incorrect option specified.\n"
+	exit 1
+fi
+
