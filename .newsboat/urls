@@ -1,0 +1,39 @@
+"query:---Repositories---:tags # \"Repositories\""
+#https://gitlab.npl.co.uk/thermal-imaging-metrology-publications.atom?feed_token=yTF_u2otb7x_jiVu_cjD	Repositories
+https://gitlab.npl.co.uk/thermal-imaging-metrology-publications/qirt-radiance-correction-methods-and-a-cross-comparison-of-applicability.atom?feed_token=yTF_u2otb7x_jiVu_cjD	Repositories
+https://gitlab.npl.co.uk/thermal-imaging-metrology-publications/ned-evaluating-nuclear-waste-storage-containers-using-thermal-imaging.atom?feed_token=yTF_u2otb7x_jiVu_cjD	Repositories
+#https://gitlab.npl.co.uk/thermal-imaging-metrology/radiance-comparison.atom?feed_token=yTF_u2otb7x_jiVu_cjD	Repositories
+"query:---Social---:tags # \"Social\""
+https://protonsforbreakfast.wordpress.com/feed/	Social
+"query:---Technology---:tags # \"Technology\""
+#https://about.gitlab.com/atom.xml Technology
+https://devblogs.microsoft.com/commandline/feed/	Technology
+#https://www.synology.com/api/rssfeed/news/en-uk	"~Synology UK" Technology
+#https://www.synology.com/api/rssfeed/news/en-us	"~Synology USA" Technology
+#https://hnrss.org/show?points=100&comments=25	"~Hacker News"	Technology
+https://lucasfcosta.com/feed.xml	Technology
+https://nickjanetakis.com/atom.xml	Technology
+http://feeds.feedburner.com/ThePragmaticEngineer	Technology
+https://www.crunchydata.com/blog/author/craig-kerstiens/rss.xml	Technology
+"query:---Gaming---:tags # \"Gaming\""
+#https://magic.wizards.com/en/rss/rss.xml	"~Magic: The Gathering"	Gaming
+#https://magic.wizards.com/en/content/deck-lists-magic-online-products-game-info "~MTGO Modern Decklists [Testing]"	Gaming
+#https://rss.app/feeds/ROaAfljdOUxMrx8W.xml	"~MTGO Modern Decklists"	Gaming
+http://feeds.feedburner.com/psblog	"~PlayStation"	Gaming
+https://stonemaiergames.com/feed/	Gaming	Podcast
+"query:---Podcast---:tags # \"Podcast\""
+https://feeds.libsyn.com/235436/rss Podcast
+https://changelog.com/podcast/feed Podcast Technology
+http://feeds.sceneonradio.org/SceneOnRadio	Podcast	Social
+https://www.drilledpodcast.com/rss/	Podcast	Social
+#https://rss.app/feeds/OnV2yJ7aKExEABZL.xml "~Titan Talk"	Podcast	Gaming
+"query:---YouTube---:tags # \"YouTube\""
+https://www.youtube.com/feeds/videos.xml?channel_id=UCG8cQBZrG2-Q76hlAZ-Et9g	YouTube	Gaming
+https://www.youtube.com/feeds/videos.xml?channel_id=UC3XTzVzaHQEd30rQbuvCtTQ	YouTube	Social
+"query:---Reddit---:tags # \"Reddit\""
+#https://old.reddit.com/message/unread/.rss	"~Reddit Unread Messages"	Reddit
+#https://www.reddit.com/r/vim.rss	Reddit	Technology
+#https://www.reddit.com/r/linux.rss	Reddit	Technology
+https://www.reddit.com/r/civ5/top.rss?t=month	"~Civ5"	Reddit	Gaming
+#https://www.reddit.com/r/civ/top.rss?limit=2	"~Civ"	Reddit	Gaming
+#https://www.reddit.com/r/magicTCG/top.rss?limit=2	"MTG"	Reddit	Gaming

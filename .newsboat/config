@@ -1,0 +1,20 @@
+#include /usr/share/doc/newsboat/contrib/colorschemes/nord
+#include /usr/share/doc/newsboat/contrib/colorschemes/inkpot
+download-full-page yes
+auto-reload yes
+refresh-on-startup yes
+scrolloff 3
+reload-threads 100
+max-items 5
+mark-as-read-on-hover yes
+#delete-read-articles-on-quit yes
+
+highlight feedlist "---.*---" default default bold
+highlight feedlist ".*0/0.." default default invis
+
+external-url-viewer "urlscan -dc -r 'linkhandler {}'"
+browser linkhandler
+macro , open-in-browser
+macro t set browser "tsp youtube-dl --add-metadata -ic"; open-in-browser; set browser linkhandler
+macro v set browser "setsid nohup mpv"; open-in-browser; set browser linkhandler
+macro w set browser "w3m"; open-in-browser; set browser linkhandler
