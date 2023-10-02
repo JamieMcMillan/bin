@@ -38,6 +38,7 @@ Plugin 'gerw/vim-latex-suite'
 Plugin 'scrooloose/nerdtree'
 Plugin 'joshdick/onedark.vim'
 Plugin 'aklt/plantuml-syntax'
+Plugin 'dense-analysis/ale'
 
 " All of your Plugins must be added before the following line
 call vundle#end()
