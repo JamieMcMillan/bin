@@ -8,6 +8,7 @@ endif
 
 set nocompatible
 filetype on
+let g:ale_completion_method=1
 
 " }}}
 " Plugin call {{{
@@ -39,6 +40,7 @@ Plugin 'scrooloose/nerdtree'
 Plugin 'joshdick/onedark.vim'
 Plugin 'aklt/plantuml-syntax'
 Plugin 'dense-analysis/ale'
+Plugin 'davidhalter/jedi-vim'
 
 " All of your Plugins must be added before the following line
 call vundle#end()
@@ -88,7 +90,7 @@ set directory=~/.vim/tmp//,.
 
 " Configure airline
 let g:airline_skip_empty_sections = 1
-let g:airline_theme='alduin'
+let g:airline_theme='onedark'
 
 " Create clear register command and run on startup
 command! ClearRegisters for i in range(34,122) | silent! call setreg(nr2char(i), []) | endfor
