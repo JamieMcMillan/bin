@@ -1,0 +1,91 @@
+#!/bin/bash
+#----------------------------------------------------------
+#	Check Git Status
+#----------------------------------------------------------
+#	
+#	Recursively search in the specified development
+#	directory and return the current status of git
+#	repositories.
+#	
+#	To be used when you have lost track of which branches
+#	you have local changes not on the main branch.
+#	
+#	Version 1.0
+#	JM	28/04/2023
+#	
+#----------------------------------------------------------
+#	Future features:
+#
+#		
+#----------------------------------------------------------
+#	Changelog:
+#
+#
+#----------------------------------------------------------
+
+shopt -s extglob
+#----------------------------------
+# Generate a unique job identifier
+#----------------------------------
+
+SCRIPT=$(basename ${BASH_SOURCE[0]})
+UNIQUE="0"
+job=$(printf "${SCRIPT}_${RANDOM}")
+while [ "$UNIQUE" -ne "1" ]
+do
+        if [[ ! -f /tmp/$job ]]
+        then
+                UNIQUE="1"
+        else
+                (>&2 echo "${SCRIPT} warning: creating new identifier")
+                job=$(printf "${SCRIPT}_${RANDOM}")
+        fi
+done
+
+
+#--------------------------
+# Check necessary installs
+#--------------------------
+
+# Update this
+# git
+if [ "$(which git)" == "" ]
+then
+	printf "${SCRIPT} error: git has not been installed\n"
+	exit 1
+fi
+
+#------------------
+# Initialisation Parameters
+#------------------
+# In which top-level directory can your git repositories be found?
+developmentDirectory="${HOME}/Documents/"
+boldText=$(tput bold)
+normalText=$(tput sgr0)
+
+
+#------------------
+# Command: checkStatus
+#------------------
+checkStatus(){
+	cd "${1%/.git}"
+	if [ ! -z "$(git --no-pager log origin/main..HEAD 2>/dev/null)" ]
+	then
+	  printf "${boldText}$(pwd)\n"
+	  git --no-pager log origin/main..HEAD --oneline 2>/dev/null
+	  printf "\n"
+	fi
+}
+
+#------------------
+# main
+#------------------
+find "${developmentDirectory}" -name ".git" -type d > /tmp/${SCRIPT}.log
+
+while read gitRepository
+do
+	checkStatus "${gitRepository}"
+done < /tmp/${SCRIPT}.log
+
+rm /tmp/${SCRIPT}.log
+exit 0

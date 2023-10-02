@@ -1,0 +1,279 @@
+#!/bin/bash
+#----------------------------------------------------------
+#	Dice Roll
+#----------------------------------------------------------
+#	
+#	An interactive script to record and update a plot
+#	with the normalised distribution of dice rolls. To
+#	be used for games with one or two die (i.e. 
+#	Settlers of Catan).
+#	
+#	Optional options are the number of die to be used.
+#
+#	In-situ commands are described in the help function.
+#	
+#	Version 1.0
+#	JM	31st May 2020
+#	
+#----------------------------------------------------------
+#	Future features:
+#
+#		
+#----------------------------------------------------------
+#	Changelog:
+#
+#
+#----------------------------------------------------------
+
+shopt -s extglob
+#----------------------------------
+# Generate a unique job identifier
+#----------------------------------
+
+SCRIPT=$(basename ${BASH_SOURCE[0]})
+UNIQUE="0"
+job=$(printf "${SCRIPT}_${RANDOM}")
+while [ "$UNIQUE" -ne "1" ]
+do
+        if [[ ! -f /tmp/$job ]]
+        then
+                UNIQUE="1"
+        else
+                (>&2 echo "${SCRIPT} warning: creating new identifier")
+                job=$(printf "${SCRIPT}_${RANDOM}")
+        fi
+done
+touch /tmp/${job}_{data,data_sorted}.csv
+
+
+#--------------------------
+# Check necessary installs
+#--------------------------
+
+# gnuplot
+if [ "$(which gnuplot)" == "" ]
+then
+	printf "${SCRIPT} error: gnuplot has not been installed\n"
+	exit 1
+fi
+
+
+#------------------------
+# Parse options and help
+#------------------------
+
+#Initialize variables to default values
+OPT_D=2
+
+#Set fonts for help
+NORM=$(tput sgr0)
+BOLD=$(tput bold)
+REV=$(tput smso)
+
+#Help function
+function HELP {
+  echo -e \\n"Help documentation for ${BOLD}${SCRIPT}.${NORM}"\\n
+  echo -e "${REV}Basic usage:${NORM} ${BOLD}$SCRIPT ${NORM}"\\n
+  echo -e "Initialises the program and awaits first die roll input."
+  echo "Command line switches are optional. The following switches are recognized."
+  echo "${REV}-d${NORM}  --Sets a value for the number of Die ${BOLD}d${NORM} to be used. Default is ${BOLD}2${NORM}."
+  echo -e "${REV}-h${NORM}  --Displays this help message. No further functions are performed."\\n
+  echo -e "During operation, numeric inputs are expected (followed by a return) and this will be recorded and the plot updated."
+  echo -e "Additional commands described by an alphabet letter can be used to perform the following actions:"\\n
+  echo -e "${REV}<number>${NORM}   --Enters ${REV}<number>${NORM} into the record."
+  echo -e "${REV}r${NORM}          --Removes the previous numeric entry."
+  echo -e "${REV}e${NORM}          --Exports the current data log and plot."
+  echo -e "${REV}h${NORM}          --Prints help."
+  echo -e "${REV}q${NORM}          --Quits the program.\\n"
+}
+
+#Parse command line flags
+#If an option should be followed by an argument, it should be followed by a ":".
+#Notice there is no ":" after "h". The leading ":" suppresses error messages from
+#getopts. This is required to get my unrecognized option code to work.
+
+while getopts :d:h FLAG; do
+  case $FLAG in
+    d) #set option "d"
+      OPT_D=$OPTARG
+      ;;
+    h)  #show help
+      HELP
+      exit 1
+      ;;
+    \?) #unrecognized option - show help
+      printf "${SCRIPT} error: option -${BOLD}$OPTARG${NORM} not permitted\n"
+      HELP
+      exit 1
+      ;;
+  esac
+done
+
+#This tells getopts to move on to the next argument.
+shift $((OPTIND-1))
+
+# Configure parameters for die number
+DIE=$OPT_D
+if [[ "$DIE" -eq "1" ]]
+then
+	xTics="set xtics 1,1,6 scale 0"
+	xRange="set xrange [0:7]"
+	dieDist="oneDieDist"
+elif [[ "$DIE" -eq "2" ]]
+then
+	xTics="set xtics 2,1,12 scale 0"
+	xRange="set xrange [1:13]"
+	dieDist="twoDieDist"
+else
+	printf "${SCRIPT} error: only configured for one or two die\n"
+	exit 1
+fi
+
+
+#----------------------
+# Populate plot script
+#----------------------
+
+cat > /tmp/${job}_plot.gnu <<- EOF
+set terminal postscript eps size 18,8 enhanced color font 'Helvetica,32'
+set output '/tmp/${job}.eps'
+
+set boxwidth 0.6
+set style fill solid
+unset grid
+set xlabel 'Number' 
+set ylabel 'Count'
+${xTics}
+${xRange}
+set yrange [0 : * < 1]
+unset ytics
+
+total=system("awk '{total+=\$1;} END {print total;}' /tmp/${job}_data_sorted.csv")
+
+\$oneDieDist << EOD
+0.167	1
+0.167	2
+0.167	3
+0.167	4
+0.167	5
+0.167	6
+EOD
+\$twoDieDist << EOD
+0.028	2
+0.056	3
+0.083	4
+0.111	5
+0.139	6
+0.167	7
+0.139	8
+0.111	9
+0.083	10
+0.056	11
+0.028	12
+EOD
+
+plot \$${dieDist} using 2:1 with line smooth bezier lc 0 notitle, \
+     '/tmp/${job}_data_sorted.csv' using 2:(\$1/total) with boxes lc 0 fs pattern 4 notitle
+EOF
+
+
+#------------------
+# Command: Remove
+#------------------
+promptRemove(){
+if [ -f "/tmp/${job}_data.csv" ]
+then
+	printf "${SCRIPT}: Deleting previous entry\n"
+	sed -i '$ d' /tmp/${job}_data.csv
+else
+	printf "${SCRIPT}: No record to remove\n"
+fi
+}
+#-----------------
+# Command: Export
+#-----------------
+promptExport(){
+if [ -f "/tmp/${job}_data_sorted.csv" ]
+then
+	printf "${SCRIPT}: Exporting record ${SCRIPT}_$(date '+%Y%m%d_%H%M%S')\n"
+	cp /tmp/${job}_data_sorted.csv ./${SCRIPT}_$(date '+%Y%m%d_%H%M%S').csv
+	cp /tmp/${job}.eps ./${SCRIPT}_$(date '+%Y%m%d_%H%M%S').eps
+else
+	printf "${SCRIPT}: No file to  export\n"
+fi
+}
+#------------------
+# Command: Numeric
+#------------------
+promptNumeric(){
+if [[ ( "$DIE" -eq "1" ) && ( "$1" -ge "1" ) && ( "$1" -le "6" ) ]]
+then
+	printf "$1\n" >> /tmp/${job}_data.csv
+elif [[ ( "$DIE" -eq "2" ) && ( "$1" -ge "2" ) && ( "$1" -le "12" ) ]]
+then
+	printf "$1\n" >> /tmp/${job}_data.csv
+else
+	printf "${SCRIPT}: Number out of range\n"
+fi
+}
+
+
+#-------------
+# Update plot
+#-------------
+
+updatePlot(){
+sort -n /tmp/${job}_data.csv | uniq -c | sed 's/^\s*//' >| /tmp/${job}_data_sorted.csv
+gnuplot /tmp/${job}_plot.gnu 2&> /dev/null
+}
+
+
+#--------------------
+# Prompt interpreter
+#--------------------
+
+promptInterpreter(){
+case $1 in
+  r)
+    promptRemove
+    ;;
+  e)
+    promptExport
+    ;;
+  q)
+    printf "${SCRIPT}: Quitting program\n"
+    promptReturn="1"
+    ;;
+  (+([0-9]))
+    promptNumeric $1
+    ;;
+  h)
+    HELP
+    ;;
+  *)
+    printf "${SCRIPT}: Unknown command, please see help\n"
+    ;;
+esac
+}
+
+
+#------------------
+# Begin data input
+#------------------
+
+updatePlot
+evince /tmp/${job}.eps > /dev/null 2>&1 &
+plotPID="$!"
+promptReturn="0"
+while [ $promptReturn -ne "1" ]
+do
+	updatePlot
+	read -p "${SCRIPT}: Enter a command [h for help] " promptCommand
+	promptInterpreter "$promptCommand"
+done
+
+kill $plotPID
+rm /tmp/${job}*
+exit 0
+
+

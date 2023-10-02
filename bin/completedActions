@@ -1,0 +1,103 @@
+#!/bin/bash
+#----------------------------------------------------------
+#	Identify Completed Actions
+#----------------------------------------------------------
+#	
+#	From the specific action files in the obsidian vault,
+#	review changes from midnight the previous day.
+#	
+#	A shortcut to highlight what tasks were completed.
+#	
+#	Version 1.0
+#	JM	28/04/2023
+#	
+#----------------------------------------------------------
+#	Future features:
+#
+#		
+#----------------------------------------------------------
+#	Changelog:
+#
+#
+#----------------------------------------------------------
+
+shopt -s extglob
+#----------------------------------
+# Generate a unique job identifier
+#----------------------------------
+
+SCRIPT=$(basename ${BASH_SOURCE[0]})
+UNIQUE="0"
+job=$(printf "${SCRIPT}_${RANDOM}")
+while [ "$UNIQUE" -ne "1" ]
+do
+        if [[ ! -f /tmp/$job ]]
+        then
+                UNIQUE="1"
+        else
+                (>&2 echo "${SCRIPT} warning: creating new identifier")
+                job=$(printf "${SCRIPT}_${RANDOM}")
+        fi
+done
+
+
+#--------------------------
+# Check necessary installs
+#--------------------------
+
+# Update this
+# git
+if [ "$(which git)" == "" ]
+then
+	printf "${SCRIPT} error: git has not been installed\n"
+	exit 1
+fi
+
+#------------------
+# Initialisation Parameters
+#------------------
+commitHistoryLog="/tmp/${SCRIPT}CommitHistory.log"
+actionDocumentList="/tmp/${SCRIPT}ActionDocumentList.log"
+completedActionsUnfiltered="/tmp/${SCRIPT}CompletedActionsUnfiltered.log"
+completedActionsFiltered="/tmp/${SCRIPT}CompletedActionsFiltered.log"
+
+obsidianVaultDirectory="${HOME}/Documents/Personal_Notes/Satellite Vu/personalNotesJamieMcMillan/"
+actionDocumentDirectory="${obsidianVaultDirectory}Actions/"
+
+#------------------
+# main
+#------------------
+
+# Change to the action document directory and export document list
+if [ -d "${actionDocumentDirectory}" ]
+then
+	cd "${actionDocumentDirectory}"
+	ls "${actionDocumentDirectory}" >| "${actionDocumentList}"
+else
+	printf "${SCRIPT} error: action document directory ${actionDocumentDirectory} does not exist\n"
+	exit 1
+fi
+
+# Identify commits over the previous two days
+git log --format="%h" --since main@{yesterday} >| "${commitHistoryLog}"
+
+# What lines have been removed in these commits
+while read commitHash
+do
+  while read actionDocument
+  do
+	git diff ${commitHash}...HEAD -- "${actionDocument}" \
+	  | grep -x '^-[^-]*' \
+	  	>> "${completedActionsUnfiltered}"
+  done < "${actionDocumentList}"
+done < "${commitHistoryLog}"
+
+# Make pretty
+sort "${completedActionsUnfiltered}" \
+  | uniq \
+  | sed 's/^-//g' \
+  | sed 's/^[[:space:]]*//g'
+
+# cleanUp
+rm /tmp/${SCRIPT}*
+exit 0

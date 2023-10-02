@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Test whether newsboat is running
+# If not running, update the unreadCount
+# Sleep required for multiple screen instances reading and writing to the same temporary file
+if ! pgrep -x "newsboat" > /dev/null
+then
+	newsboat -x reload; newsboat -x print-unread | awk '{ print $1 }' >| /tmp/checkRSS.unreadCount
+fi
+sleep 0.1
+
+# Assign to a variable
+unreadCount=$(cat /tmp/checkRSS.unreadCount)
+
+# Return count if greater than zero
+if [ "$unreadCount" -ne "0" ] 2>/dev/null
+then
+  echo "$unreadCount"
+fi
+
+exit 0

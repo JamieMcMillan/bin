@@ -1,0 +1,34 @@
+#!/bin/bash
+#----------------------------------------------------------
+#	Initiate Plot Script
+#----------------------------------------------------------
+#	
+#	In the current working directory, create a gnuplot file
+#	from the template
+#	
+#	Version 1.0
+#	JM	28/04/2023
+#	
+#----------------------------------------------------------
+#	Future features:
+#
+#		
+#----------------------------------------------------------
+#	Changelog:
+#
+#
+#----------------------------------------------------------
+
+
+#------------------
+# main
+#------------------
+
+if [[ -e "./plot.gnu" ]]
+then
+	echo "You've aready got it!"
+else
+	cp ~/.plot_template.gnu ./plot.gnu
+fi
+
+exit 0

@@ -1,0 +1,343 @@
+#!/bin/bash
+#----------------------------------------------------------
+#	Bash Chess Interpreter
+#----------------------------------------------------------
+#	
+#	Interprets a .pgn file output from scid
+#	generate using the following configuration:
+#	
+#		- Export comments		Yes
+#		- Indent comments		Unsure
+#		- Export variations		Yes
+#		- Column style			No
+#		- Symbolic annotation style	$2 $14
+#	
+#	Extracts the header information. Extracts the 
+#	NAG comments used. Extracts each turn score. 
+#	And extracts the entire mainline.
+#	
+#	These pieces of information are processed first
+#	by gnuplot to generate the summary chart and then
+#	by LaTeX. 
+#	
+#	The intermediary files are purged and summary
+#	.pdf created.
+#	
+#	Version 1.4
+#	JM	2nd November 2020
+#	
+#----------------------------------------------------------
+#	Future features:
+#
+#		- Strip comments and NAGs from the mainline
+#		  whilst preserving the xskakloop format
+#		- Test for .pgn
+#		- Add help function
+#		- Failsafe for non .pgn files and absence
+#		  of NAGs, comments or headers
+#		- Restructure plot to flow vertically and
+#		  sway left or right for white or black
+#		  score
+#		- Capture * in results, breaks TeX file
+#		
+#----------------------------------------------------------
+#	Changelog:
+#
+#		- Added a feature to extract the suggested
+#		  move from Stockfish comments
+#
+#----------------------------------------------------------
+
+# Generate a unique job identifier
+UNIQUE="0"
+job=$(printf "chess_reporter_${RANDOM}")
+while [ "$UNIQUE" -ne "1" ]
+do
+        if [[ ! -f /tmp/$job ]]
+        then
+                UNIQUE="1"
+        else
+                (>&2 echo "chess_reporter warning: creating new identifier")
+                job=$(printf "chess_reporter_${RANDOM}")
+        fi
+done
+
+
+#--------------------------
+# Check necessary installs
+#--------------------------
+
+# gnuplot
+if [ "$(which gnuplot)" == "" ]
+then
+	printf "chess_reporter warning: gnuplot has not been installed\n"
+	exit 1
+fi
+
+# pdflatex
+if [ "$(which pdflatex)" == "" ]
+then
+	printf "chess_reporter warning: LaTeX has not been installed\n"
+	exit 1
+fi
+
+# LaTeX packages
+cat >| /tmp/${job}_latex_packages.tex <<- EOF
+\documentclass[10pt,a4paper]{report}
+\usepackage[LSB2,LSBC4,T1]{fontenc}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[hmargin=1cm,vmargin=2cm]{geometry}
+\usepackage{tabularx,multicol,xskak,chessboard,fancyhdr,lastpage}
+\begin{document}
+\end{document}
+EOF
+pdflatex -halt-on-error -interaction=nonstopmode -output-directory=/tmp/ /tmp/${job}_latex_packages.tex 2&> /dev/null
+STATUS=$?
+rm /tmp/${job}_latex_packages*
+if [ "$STATUS" != "0" ]
+then
+	printf "chess_reporter warning: LaTeX packages have not been installed\n\tPlease install: fontenc, xcolor, geometry, tabularx, multicol, xskak,\n\tchessboard, fancyhdr and lastpage\n"
+	exit 1
+fi
+
+# Locate NAGCodes.txt
+NAGCODES="/home/jamie/Documents/Bash_Scripts/NAGCodes.txt"
+if [ ! -f $NAGCODES ]
+then
+	printf "chess_reporter warning: Cannot locate NAGCodes.txt\n"
+	exit 1
+fi
+
+
+#-----------------
+# Parse .pgn file
+#-----------------
+
+# Test whether argument exist as files and define input file
+IFS=$'\n' command eval 'echo "$*" >| /tmp/${job}_arg_list'
+while read arg
+do
+        if [ -z "$arg" ]
+        then
+                printf "chess_reporter warning: No input file provided\n"
+                exit 1
+        else
+                if [[ ( ! -f "$arg" ) ]]
+                then
+                        printf "chess_reporter warning: $arg is not a file\n"
+                        exit 1
+		else
+			INFILE=$1
+                fi
+        fi
+done < /tmp/${job}_arg_list
+
+# Extract and restructure variation
+# Compliments to https://stackoverflow.com/questions/12129870/how-can-i-remove-a-line-feed-newline-before-a-pattern-using-sed
+cat $INFILE \
+	| sed 's/) /)\n/' \
+	| sed ':r;$!{N;br};s/}\n(/ (/g' \
+	| sed 's/( [0-9]\+\.\+\([^[:space:]]*\) .*/(\1)}/'  \
+	>| /tmp/${job}_restructured_game.pgn
+INFILE="/tmp/${job}_restructured_game.pgn"
+
+
+# Parse header
+HEADER_EVENT=$(sed -n 's/\[Event "\(.*\)"\]/\1/gp' $INFILE)
+HEADER_SITE=$(sed -n 's/\[Site "\(.*\)"\]/\1/gp' $INFILE)
+HEADER_EVENTDATE=$(sed -n 's/\./-/g;s/\[EventDate "\(.*\)"\]/\1/gp' $INFILE | xargs date '+%d %B %Y' -d)
+HEADER_ROUND=$(sed -n 's/\[Round "\(.*\)"\]/\1/gp' $INFILE)
+HEADER_WHITE=$(sed -n 's/\[White "\(.*\)"\]/\1/gp' $INFILE)
+HEADER_BLACK=$(sed -n 's/\[Black "\(.*\)"\]/\1/gp' $INFILE)
+HEADER_RESULT=$(sed -n 's/\[Result "\(.*\)"\]/\1/gp' $INFILE)
+HEADER_ECO=$(sed -n 's/\[ECO "\(.*\)"\]/\1/gp' $INFILE)
+HEADER_ANNOTATOR=$(sed -n 's/\[Annotator "\(.*\)"\]/\1/gp' $INFILE)
+
+
+# Identify used NAGs
+sed 's/\s/\n/g' $INFILE \
+	| sed -n '/\$201/d;/^\$[0-9]*/p' \
+	| sort -n -k 1.2 \
+	| uniq \
+	>| /tmp/${job}_NAGs_used
+
+while read NAG
+do
+	printf "\t\t\\mainline{%s} & %s \\\\\\ \n" \
+		"$NAG" \
+		"$(sed -n "s/$NAG\t\(.*\)/\1/p" $NAGCODES)" \
+			>> /tmp/${job}_NAGs_formatted
+done < /tmp/${job}_NAGs_used
+
+
+# Extract scores
+sed -n 's/.*{\(.*\)}/\1/gp' $INFILE \
+	| sed 's/\(.*\) \/ .*/\1/g' \
+		>| /tmp/${job}_move_score.csv
+
+# Extract mainline
+sed "1,/^$/d;s/^[0-9]*\.\.\.//g;s/{/\\\xskakcomment{/g;s/\$201//g;/^$/d;s@\(.*\)$HEADER_RESULT@\1\\\xskakcomment{ $HEADER_RESULT}@" $INFILE \
+	>| /tmp/${job}_mainline
+
+
+#----------------------
+# Populate plot script
+#----------------------
+
+cat > /tmp/${job}_plot.gnu <<- EOF
+reset
+
+set terminal cairolatex pdf input color size 7,2.5 
+set output '/tmp/${job}_move_score.tex'
+set datafile missing "NaN"
+set border 3
+unset grid
+
+set xlabel 'Turns'
+set xrange [-1 : *]
+set xtics scale 0
+set ylabel 'Score'
+set yrange [-10 < * : * < 10]
+set ytics scale 0
+
+set boxwidth 0.25
+set style fill solid 1.0 border rgb 'black'
+set arrow at graph 0, graph 0 to graph 1, graph 0 size 0.5,40
+
+plot "/tmp/${job}_move_score.csv" every 2 u 0:1 with boxes lc rgb 'white' fs pattern 3 notitle, \
+     "" every 2::1 u (\$0+0.5):1 with boxes lc rgb 'black' fs pattern 3 notitle
+EOF
+
+#-----------------------
+# Populate LaTeX script
+#-----------------------
+
+cat >| /tmp/${job}_report.tex <<- EOF
+\documentclass[10pt,a4paper]{report}
+%https://tex.stackexchange.com/questions/496239/diagram-not-align-and-mark-on-move?rq=1
+
+% Define necessary packages
+\usepackage[LSB2,LSBC4,T1]{fontenc}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[hmargin=1cm,vmargin=2cm]{geometry}
+\usepackage{tabularx,multicol,xskak,chessboard,fancyhdr,lastpage}
+
+% Format the page style
+%	-> Input the date of game
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textsymking \textsymqueen \textsymrook \textsymbishop \textsymknight \textsympawn}
+\fancyhead[R]{Chess}
+\fancyfoot[L]{Game Report - $HEADER_EVENTDATE}
+\fancyfoot[R]{\thepage\ of \pageref{LastPage}}
+\renewcommand{\headrulewidth}{2pt}
+\renewcommand{\footrulewidth}{1pt}
+
+% Determine whether the move arrow should be straight or curved (i.e. knight)
+\newcommand\getmovestyle[1]{
+	\ifthenelse
+	{\equal{#1}{N}}
+		{\def\mymovestyle{[clockwise=false,style=knight]curvemove}}
+	{\ifthenelse
+	{\equal{#1}{}}
+		{\def\mymovestyle{curvemove}}
+		{\def\mymovestyle{straightmove}}}}
+
+% Define the iterative chess loop
+\newcommand\mychessloop[1][]{
+	\xskakloop[step=1]{
+		\getmovestyle{\xskakget{piecechar}}
+		\noindent\centering\begin{tabular}{c}
+			\chessboard[boardfontfamily=alphadia,
+				boardfontencoding=LSBC4,
+				smallboard, showmover=false, label=false, pgfstyle=\mymovestyle, color=BrickRed,
+				markmoves=\xskakget{move}, pgfshortenend=0.3em, arrow=to,color=Cyan, markstyle=circle, markfield=\xskakget{movefrom},
+				emphfields=\xskakget{moveto}, setfen=\xskakget{nextfen}, coloremph=true,
+				whitefieldmaskcolor=Goldenrod,blackfieldmaskcolor=Goldenrod,emphfield=\xskakget{moveto},
+			]\\\\
+		\parbox{0.28\textwidth}{%
+		\centering
+		\xskakget{opennr}
+		\xskakget{san}
+		\xskakget{nag}}
+		\par
+		\end{tabular}\quad
+}}
+
+\begin{document}
+
+% Redefine the move notation format
+\makeatletter
+	\xskaknewstyleitem[%
+		whiteopen={.~},
+		blackopen={.\,\space\ldots},
+		beforewhite={},%\space,
+		beforeblack=\space,%\space,
+		afterwhite=,%\space,
+		afterblack={\space\,},%\space,
+	]{styleD}
+\makeatother
+
+% Provide title information and a notation legend 
+%	-> Input game information (names, ECO, annotator, result, location and date)
+%	-> Input the NAG notations used within game
+\newchessgame
+\onecolumn\begin{multicols}{2}{
+	\begin{tabularx}{0.9\textwidth}{rllXr}
+		White: & $HEADER_WHITE & & & \\\\
+		Black: & $HEADER_BLACK & & & \\\\
+		Event: & $HEADER_EVENT & & & Round $HEADER_ROUND \\\\
+		Opening ECO: & $HEADER_ECO & & & $HEADER_SITE \\\\
+		Annotator: & $HEADER_ANNOTATOR & & & $HEADER_EVENTDATE \\\\
+		Result: & $HEADER_RESULT \\\\
+		& \\\\
+EOF
+cat /tmp/${job}_NAGs_formatted >> /tmp/${job}_report.tex
+cat >> /tmp/${job}_report.tex <<- EOF
+	\end{tabularx}
+	}
+\end{multicols}
+
+% Summary chart of turn score
+%	-> Input gnuplot chart
+\begin{figure}[h]
+	\centering
+	\input{/tmp/${job}_move_score}
+\end{figure}
+
+% Define the format of the mainline turns (i.e. NAG colour, comment colour)
+\xskakset{style=test}
+\xskaknewstyleitem[%
+	template=UF,
+	beforeNAG=\color{NavyBlue},
+	beforecomment=\color{PineGreen}]{comment}
+\xskakaddtostyle[level=1,styleitem=comment,font=\bfseries]{test}
+\setboardfontcolors{blackfieldmask=gray!40}
+\setfigstyle{\normalfont}
+
+% Start chess game
+%	-> Input formatted game
+\newchessgame
+\mainline
+{
+EOF
+cat /tmp/${job}_mainline >> /tmp/${job}_report.tex
+cat >> /tmp/${job}_report.tex <<- EOF
+}
+
+% Iterate through the mainline with diagrams
+\mychessloop
+
+\end{document}
+EOF
+
+gnuplot /tmp/${job}_plot.gnu
+
+printf "chess_reporter: Compiling report...\r"
+pdflatex -draftmode -halt-on-error -interaction=nonstopmode -output-directory=/tmp/ /tmp/${job}_report.tex 2&> /dev/null
+pdflatex -halt-on-error -interaction=nonstopmode -output-directory=/tmp/ /tmp/${job}_report.tex 2&> /dev/null
+printf "\033[2K"
+
+cp --backup=numbered /tmp/${job}_report.pdf ./$(date '+%Y%m%d' -d "$HEADER_EVENTDATE")_"${HEADER_ROUND}"_"${HEADER_WHITE}"_"${HEADER_BLACK}".pdf
+rm /tmp/${job}*
+exit 0
