@@ -134,6 +134,7 @@ printMarkdown()
   pandoc "${inputFile}" 		\
 	-o "${inputFile%.md}".pdf 	\
 	--from markdown 			\
+	--pdf-engine=xelatex		\
 	--listings					\
 	${templateCommand}
 }
