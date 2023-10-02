@@ -105,3 +105,10 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # GPG key fix
 export GPG_TTY=$(tty)
+
+# Functions
+# configuration git repository
+# 	git is replaced by config
+function config {
+   /usr/bin/git --git-dir=$HOME/.configuration/ --work-tree=$HOME $@
+}
