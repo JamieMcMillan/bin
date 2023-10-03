@@ -238,6 +238,11 @@ nnoremap <C-g> :Goyo<CR>
 
 " }}}
 
+" Jedi {{{
+let g:jedi#use_splits_not_buffers = "bottom"
+let g:jedi#smart_auto_mappings = 1
+
+" }}}
 set background=dark
 colorscheme onedark
 

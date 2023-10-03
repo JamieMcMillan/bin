@@ -28,3 +28,5 @@ let g:ale_python_ruff_options='--ignore E501'
 "set omnifunc=ale#completion#OmniFunc
 
 set foldmethod=indent
+
+let $PYTHONPATH .= ';' . '/Users/jamiemcmillan/Documents/Development/'
