@@ -99,6 +99,7 @@ fi
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
+alias cat='bat --theme=OneHalfDark'
 
 # Add brew paths
 eval "$(/opt/homebrew/bin/brew shellenv)"
