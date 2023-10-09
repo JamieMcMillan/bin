@@ -1,0 +1,7 @@
+[flake8]
+per-file-ignores = 
+	testing/**: F811
+exclude =
+    .git,
+    __pycache__,
+	testing,

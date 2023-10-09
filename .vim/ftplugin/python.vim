@@ -24,6 +24,9 @@ let g:ale_warn_about_trailing_blank_lines=0
 let g:ale_warn_about_trailing_whitespace=0
 let g:ale_virtualtext_cursor = 'disabled'
 let g:ale_python_ruff_options='--ignore E501'
+let g:ale_python_ruff_use_config='$HOME/.ruff.toml'
+let g:ale_python_flake8_use_config='$HOME/.flake8'
+let g:ale_python_bandit_options='-c $HOME/.bandit.yaml'
 "let g:ale_completion_enabled = 1
 "set omnifunc=ale#completion#OmniFunc
 
