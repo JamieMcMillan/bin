@@ -1,4 +1,5 @@
 [flake8]
+ignore = E501
 per-file-ignores = 
 	testing/**: F811
 exclude =
