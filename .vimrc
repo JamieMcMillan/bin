@@ -41,6 +41,8 @@ Plugin 'joshdick/onedark.vim'
 Plugin 'aklt/plantuml-syntax'
 Plugin 'dense-analysis/ale'
 Plugin 'davidhalter/jedi-vim'
+Plugin 'instant-markdown/vim-instant-markdown'
+Plugin 'mzlogin/vim-markdown-toc'
 
 " All of your Plugins must be added before the following line
 call vundle#end()
@@ -237,7 +239,6 @@ nnoremap <C-b> :BLines<CR>
 nnoremap <C-g> :Goyo<CR>
 
 " }}}
-
 " Jedi {{{
 let g:jedi#use_splits_not_buffers = "bottom"
 let g:jedi#smart_auto_mappings = 1
@@ -246,3 +247,8 @@ let g:jedi#smart_auto_mappings = 1
 set background=dark
 colorscheme onedark
 
+" }}}
+" Markdown {{{
+let g:vmt_fence_text = "beginning-of-markdown-toc"
+let g:vmt_fence_closing_text = "end-of-markdown-toc"
+let g:instant_markdown_autoscroll = 1
