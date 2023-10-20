@@ -7,3 +7,6 @@
 [per-file-ignores]
 "__init__.py" = ["F811"]
 "**/{testing,tests,docs,tools,Documentation}" = ["F811"]
+
+# Never enforce `I001` (import block is unsorted).
+ignore = ["I001"]
