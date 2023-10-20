@@ -1,9 +1,9 @@
 #!/opt/homebrew/bin/python3
 
+import warnings
 import argparse
 import numpy as np
 import numpy.ma as ma
-import sys
 import rasterio as rio
 from PIL import Image
 from matplotlib.colors import LinearSegmentedColormap
@@ -39,17 +39,17 @@ class Show():
             ["#000442", "#3E83B3", "#FFC83C", "#FF5B00"]
         )
         
-    def image_to_8_bit(self, im, pct_l=2, pct_h=98, equalize=False):
+    def image_to_8_bit(self, im: ma.MaskedArray, pct_l: int = 2, pct_h: int = 98) -> ma.MaskedArray:
         mask = im.mask
-        unmasked = im[mask == False]
+        unmasked = im[mask == 0]
         im = im - unmasked.mean()
         im = im - im.min()
-        if equalize:
-            bit8 = exposure.equalize_hist(im.data)
-        else:
-            pct2 = np.percentile(im[mask == False], pct_l)
-            pct98 = np.percentile(im[mask == False], pct_h)
-            bit8 = im.clip(pct2, pct98)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            pct2 = np.percentile(im[mask == 0], pct_l)
+            pct98 = np.percentile(im[mask == 0], pct_h)
+
+        bit8 = im.clip(pct2, pct98)
         bit8 = bit8 - bit8.min()
         bit8 = self.gen_new_citrus_cmap()(bit8 / bit8.max())
         bit8 = (bit8 * 255).astype(np.uint8)
@@ -60,7 +60,7 @@ class Show():
 if __name__ == '__main__':
     show = Show()
     show.parse_arguments()
-
+    
     d = show.image_to_8_bit(rio.open(show.input_filepath).read(1, masked=True))
     im = Image.fromarray(d)
     im.show()
