@@ -1,37 +1,69 @@
 #!/opt/homebrew/bin/python3
 
+import argparse
 import numpy as np
 import numpy.ma as ma
 import sys
 import rasterio as rio
 from PIL import Image
 from matplotlib.colors import LinearSegmentedColormap
+from pathlib import Path
 
-def gen_new_citrus_cmap():
-    return LinearSegmentedColormap.from_list(
-        "NewCitrus",
-        ["#000442", "#3E83B3", "#FFC83C", "#FF5B00"]
-    )
-    
-def image_to_8_bit(im, pct_l=2, pct_h=98, equalize=False):
-    mask = im.mask
-    unmasked = im[mask == False]
-    im = im - unmasked.mean()
-    im = im - im.min()
-    if equalize:
-        bit8 = exposure.equalize_hist(im.data)
-    else:
-        pct2 = np.percentile(im[mask == False], pct_l)
-        pct98 = np.percentile(im[mask == False], pct_h)
-        bit8 = im.clip(pct2, pct98)
-    bit8 = bit8 - bit8.min()
-    bit8 = gen_new_citrus_cmap()(bit8 / bit8.max())
-    bit8 = (bit8 * 255).astype(np.uint8)
-    bit8 = np.where(bit8 == 0, 1, bit8)
-    return bit8
+
+class Show():
+    input_filepath: Path
+    output_filepath: Path
+
+    def parse_arguments(self):
+        parser = argparse.ArgumentParser()
+
+        parser.add_argument(
+            'input'
+        )
+        parser.add_argument(
+            "-o",
+            "--output",
+            nargs=1,
+            help="Output file name",
+            type=str,
+        )
+
+        args = parser.parse_args()
+        self.input_filepath = Path(args.input)
+        if args.output:
+            self.output_filepath = Path(args.output[0])
+
+    def gen_new_citrus_cmap(self):
+        return LinearSegmentedColormap.from_list(
+            "NewCitrus",
+            ["#000442", "#3E83B3", "#FFC83C", "#FF5B00"]
+        )
+        
+    def image_to_8_bit(self, im, pct_l=2, pct_h=98, equalize=False):
+        mask = im.mask
+        unmasked = im[mask == False]
+        im = im - unmasked.mean()
+        im = im - im.min()
+        if equalize:
+            bit8 = exposure.equalize_hist(im.data)
+        else:
+            pct2 = np.percentile(im[mask == False], pct_l)
+            pct98 = np.percentile(im[mask == False], pct_h)
+            bit8 = im.clip(pct2, pct98)
+        bit8 = bit8 - bit8.min()
+        bit8 = self.gen_new_citrus_cmap()(bit8 / bit8.max())
+        bit8 = (bit8 * 255).astype(np.uint8)
+        bit8 = np.where(bit8 == 0, 1, bit8)
+        return bit8
+
 
 if __name__ == '__main__':
-    fn = sys.argv[1]
-    d = image_to_8_bit(rio.open(fn).read(1, masked=True))
+    show = Show()
+    show.parse_arguments()
+
+    d = show.image_to_8_bit(rio.open(show.input_filepath).read(1, masked=True))
     im = Image.fromarray(d)
     im.show()
+
+    if show.output_filepath:
+        Image.fromarray(d).save(show.output_filepath)
