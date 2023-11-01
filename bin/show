@@ -8,11 +8,12 @@ import rasterio as rio
 from PIL import Image
 from matplotlib.colors import LinearSegmentedColormap
 from pathlib import Path
+from typing import Optional
 
 
 class Show():
     input_filepath: Path
-    output_filepath: Path
+    output_filepath: Optional[Path] = None
 
     def parse_arguments(self):
         parser = argparse.ArgumentParser()
