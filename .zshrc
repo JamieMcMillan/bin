@@ -113,3 +113,6 @@ export GPG_TTY=$(tty)
 function config {
    /usr/bin/git --git-dir=$HOME/.configuration/ --work-tree=$HOME $@
 }
+
+# AWS default profile
+export AWS_DEFAULT_PROFILE=qa
