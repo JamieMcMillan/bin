@@ -1,12 +1,8 @@
 # Ignore `E402` (import violations) in all `__init__.py` files, and in `path/to/file.py`.
-[per-file-ignores]
-"__init__.py" = ["E402"]
-"**/{testing,tests,docs,tools,Documentation}" = ["E402"]
-
 # Ignore `F811` (import violations) in all `__init__.py` files, and in `path/to/file.py`.
 [per-file-ignores]
-"__init__.py" = ["F811"]
-"**/{testing,tests,docs,tools,Documentation}" = ["F811"]
+"__init__.py" = ["E402", "F811"]
+"**/{testing,tests,docs,tools,Documentation}" = ["E402", "F811"]
 
 # Never enforce `I001` (import block is unsorted).
 ignore = ["I001"]
