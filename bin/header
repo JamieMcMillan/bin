@@ -1,0 +1,62 @@
+#!/opt/homebrew/bin/python3
+import sys
+import os
+currentPath = os.getcwd()
+scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
+os.chdir(scriptPath)
+sys.path.append("../Documents/Development/theia/")
+from theia.imi_file.imi_file import IMILoader
+from theia.imi_file.imi_file import IMILoader
+from theia.imi_file.header import Header
+os.chdir(currentPath)
+
+import json
+import argparse
+from typing import Optional, Any, Dict
+
+
+class Header():
+    input_filepath: str
+    output_filepath: Optional[str] = None
+    header: Header
+
+    def parse_arguments(self):
+        parser = argparse.ArgumentParser()
+
+        parser.add_argument(
+            'input'
+        )
+        parser.add_argument(
+            "-o",
+            "--output",
+            nargs=1,
+            help="Output file name",
+            type=str,
+        )
+
+        args = parser.parse_args()
+        self.input_filepath = args.input
+        if args.output:
+            self.output_filepath = args.output[0]
+
+    def print(self) -> None:
+        with IMILoader().lazy_load_from_url(url=self.input_filepath) as imi_file:
+            self.header = imi_file.read_header()
+            print(self.header.as_string_dict())
+
+    def save(self) -> None:
+        if self.output_filepath and self.header:
+            print(f"Saving to {self.output_filepath}")
+            with open(self.output_filepath, 'w') as file:
+                file.write(json.dumps(self.header.as_string_dict()))
+        else:
+            raise ValueError(f"{__name__}: Missing output path and a header to write")
+
+
+if __name__ == '__main__':
+    header = Header()
+    header.parse_arguments()
+    header.print()
+    
+    if header.output_filepath:
+        header.save()
