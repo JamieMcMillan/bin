@@ -1,0 +1,2 @@
+#!/bin/bash
+java -jar $HOME/.plantuml-1.2023.11.jar -tsvg $@

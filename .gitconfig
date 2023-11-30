@@ -1,0 +1,15 @@
+[user]
+	name = Jamie McMillan
+	email = jamie.mcmillan@satellitevu.com
+	signingkey = E37F44984EA53170
+[commit]
+	gpgsign = true
+    template = .gitmessage
+[gpg]
+	program = /usr/local/bin/gpg
+[sequence]
+	editor = /usr/bin/vim
+[core]
+	editor = /usr/bin/vim
+[push]
+	autoSetupRemote = True
