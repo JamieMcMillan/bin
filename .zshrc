@@ -116,3 +116,5 @@ function config {
 
 # AWS default profile
 export AWS_DEFAULT_PROFILE=qa
+# Poetry install bin
+export PATH="/Users/jamiemcmillan/.local/bin:$PATH"
