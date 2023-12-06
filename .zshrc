@@ -100,6 +100,7 @@ fi
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 alias cat='bat --theme=OneHalfDark'
+alias launchEC2="aws ssm start-session  --target i-035997a8f22416123 --document-name AWS-StartPortForwardingSessionToRemoteHost  --parameters '{\"portNumber\":[\"22\"],\"localPortNumber\":[\"2222\"]}' --region eu-west-2"
 
 # Add brew paths
 eval "$(/opt/homebrew/bin/brew shellenv)"
