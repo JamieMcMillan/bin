@@ -7,13 +7,12 @@ import numpy.ma as ma
 import rasterio as rio
 from PIL import Image
 from matplotlib.colors import LinearSegmentedColormap
-from pathlib import Path
 from typing import Optional
 
 
 class Show():
-    input_filepath: Path
-    output_filepath: Optional[Path] = None
+    input_filepath: str
+    output_filepath: Optional[str] = None
 
     def parse_arguments(self):
         parser = argparse.ArgumentParser()
@@ -30,9 +29,9 @@ class Show():
         )
 
         args = parser.parse_args()
-        self.input_filepath = Path(args.input)
+        self.input_filepath = args.input
         if args.output:
-            self.output_filepath = Path(args.output[0])
+            self.output_filepath = args.output[0]
 
     def gen_new_citrus_cmap(self):
         return LinearSegmentedColormap.from_list(
@@ -58,7 +57,7 @@ class Show():
         return bit8
 
 
-if __name__ == '__main__':
+def main() -> None:
     show = Show()
     show.parse_arguments()
     
@@ -68,3 +67,7 @@ if __name__ == '__main__':
 
     if show.output_filepath:
         Image.fromarray(d).save(show.output_filepath)
+
+
+if __name__ == '__main__':
+    main()
