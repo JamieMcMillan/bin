@@ -23,8 +23,8 @@
 #------------------
 # Initialisation Parameters
 #------------------
-templateLocation="${HOME}/Documents/Personal_Notes/Satellite Vu/personalNotesJamieMcMillan/Meetings/.meetingNoteTemplate.md"
-vaultLocation="${HOME}/Documents/Personal_Notes/Satellite Vu/personalNotesJamieMcMillan/Meetings/"
+templateLocation="${HOME}/Documents/Development/personalNotesJamieMcMillan/Meetings/.meetingNoteTemplate.md"
+vaultLocation="${HOME}/Documents/Development/personalNotesJamieMcMillan/Meetings/"
 dateTodayCalendar=$(date '+%d/%m/%Y')
 dateTodayFilename=$(date '+%Y%m%d')
 
