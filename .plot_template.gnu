@@ -46,8 +46,8 @@ set output '.eps'
 set timefmt "%H:%M:%S"
 set xdata time
 set format x "%H:%M:%S"
-set xtics rotate by 60 offset -3,-3.3
-set xlabel 'Time / hh:mm:ss' offset 0,-2.5
+set xtics rotate by 60 right
+set xlabel 'Time / hh:mm:ss'
 set ylabel ''
 set ytics format "%4.2f"
 set grid
