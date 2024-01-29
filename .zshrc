@@ -121,9 +121,3 @@ export AWS_DEFAULT_PROFILE=qa
 # Poetry install bin
 export PATH="/Users/jamiemcmillan/.local/bin:$PATH"
 
-# Setup gdal
-. $HOME/Documents/Development/spack/share/spack/setup-env.sh
-spack load gdal@3.6.4
-export PATH="$HOME/Documents/Development/spack/opt/spack/darwin-sonoma-m2/apple-clang-15.0.0/gdal-3.6.4-3ufwv3vqkzkdfoir2lnlubibczfyqhvp/lib:$PATH"
-export PYTHON_PATH="$(spack location -i gdal):$PYTHON_PATH"
-
