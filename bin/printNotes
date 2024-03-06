@@ -131,6 +131,14 @@ printMarkdown()
 	templateCommand="--template eisvogel"
   fi
 
+  mkdir -p "/tmp/${inputFile}"
+  pandoc "${inputFile}" 		\
+	-o "/tmp/${inputFile%.md}".tex 	\
+	--from markdown 			\
+	--pdf-engine=xelatex		\
+	--listings					\
+	${templateCommand}
+
   pandoc "${inputFile}" 		\
 	-o "${inputFile%.md}".pdf 	\
 	--from markdown 			\
