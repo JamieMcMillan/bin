@@ -101,6 +101,9 @@ autocmd VimEnter * ClearRegisters
 " Add .rasi file syntax highlighting
 au BufNewFile,BufRead /*.rasi setf css
 
+" NERDTree was gettign bigger when closing a file, this restricts that
+set noequalalways
+
 " }}}
 " Indentation {{{
 "
