@@ -41,7 +41,8 @@ Plugin 'joshdick/onedark.vim'
 Plugin 'aklt/plantuml-syntax'
 Plugin 'dense-analysis/ale'
 Plugin 'davidhalter/jedi-vim'
-Plugin 'instant-markdown/vim-instant-markdown'
+"Plugin 'instant-markdown/vim-instant-markdown'  " Turned off because I just
+"kept closing it...
 Plugin 'mzlogin/vim-markdown-toc'
 
 " All of your Plugins must be added before the following line
@@ -247,11 +248,12 @@ let g:jedi#use_splits_not_buffers = "bottom"
 let g:jedi#smart_auto_mappings = 1
 
 " }}}
-set background=dark
-colorscheme onedark
-
-" }}}
 " Markdown {{{
 let g:vmt_fence_text = "beginning-of-markdown-toc"
 let g:vmt_fence_closing_text = "end-of-markdown-toc"
 let g:instant_markdown_autoscroll = 1
+" }}}
+
+set background=dark
+colorscheme onedark
+

@@ -13,3 +13,5 @@
 	editor = /usr/bin/vim
 [push]
 	autoSetupRemote = True
+[http]
+	postBuffer = 257286400

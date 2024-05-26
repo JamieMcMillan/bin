@@ -1,0 +1,13 @@
+#!/bin/bash
+
+INPUT_FILE="$1"
+
+fileSize=$(wc -c < "${INPUT_FILE}")
+fileDuration=$(ffprobe -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${INPUT_FILE}" 2>/dev/null)
+
+printf "File: ${INPUT_FILE}\n\tsize: %i\n\tduration: %.0f\n" \
+	${fileSize} \
+	${fileDuration}
+
+exit 0
+

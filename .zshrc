@@ -100,7 +100,7 @@ fi
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 alias cat='bat --theme=OneHalfDark'
-alias launchEC2="aws ssm start-session  --target i-035997a8f22416123 --document-name AWS-StartPortForwardingSessionToRemoteHost  --parameters '{\"portNumber\":[\"22\"],\"localPortNumber\":[\"2222\"]}' --region eu-west-2"
+alias launchEC2="aws ssm start-session --profile qa --target i-035997a8f22416123 --document-name AWS-StartPortForwardingSessionToRemoteHost  --parameters '{\"portNumber\":[\"22\"],\"localPortNumber\":[\"2222\"]}' --region eu-west-2"
 alias plot='gnuplot plot.gnu'
 
 # Add brew paths
