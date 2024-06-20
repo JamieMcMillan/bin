@@ -1,0 +1,80 @@
+#!/bin/bash
+#----------------------------------------------------------
+#	Query QA IMI Files
+#----------------------------------------------------------
+#	
+#	For an input string, search the QA AWS bucket for the
+#	S3 URI.
+#	
+#	Version 1.0
+#	JM	06/06/2024
+#	
+#----------------------------------------------------------
+#	Future features:
+#		- 
+#		
+#----------------------------------------------------------
+#	Changelog:
+#		- 
+#
+#----------------------------------------------------------
+
+shopt -s extglob
+#----------------------------------
+# Generate a unique job identifier
+#----------------------------------
+
+SCRIPT=$(basename ${BASH_SOURCE[0]})
+UNIQUE="0"
+job=$(printf "${SCRIPT}_${RANDOM}")
+while [ "$UNIQUE" -ne "1" ]
+do
+        if [[ ! -f /tmp/$job ]]
+        then
+                UNIQUE="1"
+        else
+                (>&2 echo "${SCRIPT} warning: creating new identifier")
+                job=$(printf "${SCRIPT}_${RANDOM}")
+        fi
+done
+
+
+#--------------------------
+# Check necessary installs
+#--------------------------
+
+if [ "$(which aws)" == "" ]
+then
+	printf "${SCRIPT} error: aws has not been installed\n"
+	exit 1
+fi
+
+#--------------------------
+# Retrieve bucket dump
+#--------------------------
+
+S3_BUCKET=${QUERY_IMI_BUCKET}
+S3_BUCKET_URI=$(printf "s3://%s/" ${S3_BUCKET})
+LOCAL_BUCKET_DUMP="/tmp/${SCRIPT}-localBucketDump.log"
+
+if [ ! -e "${LOCAL_BUCKET_DUMP}" ]
+then
+  aws s3 ls --recursive ${S3_BUCKET_URI} \
+	> ${LOCAL_BUCKET_DUMP}
+fi
+
+#--------------------------
+# Query local dump for key
+#--------------------------
+
+IMI_ID="$1"
+
+cat ${LOCAL_BUCKET_DUMP} \
+	| awk "/${IMI_ID}/&&/.IMI/" \
+	| sed "s@^.*  [0-9]* @${S3_BUCKET_URI}@"
+
+exit 0
+
+
+
+

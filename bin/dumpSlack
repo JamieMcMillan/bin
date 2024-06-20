@@ -1,0 +1,4 @@
+#!/bin/bash
+
+INPUT="$1"
+slackdump -f -r text -base ~/Documents/Slack_Archive -ft "{{.Name}}{{ if .ThreadTS}}-{{.ThreadTS}}{{end}}" "${INPUT}"

@@ -4,5 +4,5 @@ rsync -auv \
 	/Users/jamiemcmillan/Documents/Bibliography/ \
 	/Users/jamiemcmillan/OneDrive\ -\ Global\ Satellite\ Vu/Bibliography/
 
-printf "Updated on $(date '+%Y%m%d_%H%M%S')" /Users/jamiemcmillan/OneDrive\ -\ Global\ Satellite\ Vu/Bibliography/updated.log
+printf "Updated on $(date '+%Y%m%d_%H%M%S')" >| /Users/jamiemcmillan/OneDrive\ -\ Global\ Satellite\ Vu/Bibliography/updated.log
 
